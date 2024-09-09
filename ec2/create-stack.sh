@@ -1,0 +1,31 @@
+#!/bin/sh
+
+STACK_NAME=apache-web-server
+
+echo "Creating Stack"
+
+aws cloudformation create-stack \
+  --stack-name $STACK_NAME  \
+  --template-body file://cfn-EC2-SG-cfn-init-signal.json \
+  --parameters \
+    ParameterKey=KeyName,ParameterValue=WebTier-EC2-London-KeyPair \
+    ParameterKey=InstanceType,ParameterValue=t2.micro \
+    ParameterKey=SSHLocation,ParameterValue=0.0.0.0/0
+
+echo "Waiting for Stack to be complete ..."
+
+aws cloudformation wait stack-create-complete \
+	    --stack-name $STACK_NAME
+
+
+echo "testing web server endpoint"
+# Retrieve output parameter 'PublicIP' for testing
+PUBLIC_IP=$(aws cloudformation describe-stacks \
+  --stack-name $STACK_NAME \
+  --query "Stacks[0].Outputs[?OutputKey=='PublicIP'].OutputValue" \
+  --output text)
+
+set -x
+curl http://$PUBLIC_IP
+
+echo "Complete."
