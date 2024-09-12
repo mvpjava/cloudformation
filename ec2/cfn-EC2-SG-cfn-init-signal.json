@@ -633,6 +633,12 @@
         }
     },
     "Outputs": {
+        "StackName": {
+            "Description" : "This Stack name. Useful for passing along through pipleline actions as variable",
+            "Value":{
+                "Ref": "AWS::StackName"
+            }
+        },
         "InstanceId": {
             "Description": "InstanceId of the newly created EC2 instance",
             "Value": {
