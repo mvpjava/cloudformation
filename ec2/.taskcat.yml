@@ -1,0 +1,10 @@
+project:
+  name: taskcat-webserver
+  regions:
+    - eu-west-2
+tests:
+  webserver-infra-provisioning:
+    template: ./cfn-EC2-SG-cfn-init-signal.json
+    s3_bucket: codebuild-triomni
+    parameters: 
+      KeyName: WebTier-EC2-London-KeyPair
