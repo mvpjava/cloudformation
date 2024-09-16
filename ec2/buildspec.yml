@@ -1,0 +1,27 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: latest
+    commands:
+      - echo install phase started on `date`
+      - python --version
+      - curl -O https://bootstrap.pypa.io/get-pip.py
+      - python3 get-pip.py
+      - pip install --upgrade pip
+      - pip install taskcat
+      - taskcat --version
+  build:
+    commands:
+      - echo Build started on `date`
+      - taskcat test run -p ./ec2
+      - ls -1 taskcat_outputs
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - aws s3 cp --recursive ./taskcat_outputs s3://codebuild-triomni/taskcat-webserver/taskcat_outputs
+cache:
+  type: s3
+  location: codebuild-triomni/build-cache-python
+  paths:
+    - '/root/.cache/pip/**/*'
