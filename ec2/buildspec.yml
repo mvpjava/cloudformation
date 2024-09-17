@@ -38,16 +38,15 @@ phases:
       - ls -1 taskcat_outputs
       - taskcat -q list --profiles taskcatRole
       # Custom test to ensure web server is responding to endpoint
+      # TODO (replace ls with actual test)
       - ls
-      # Remove all stacks created by taskcat project
+      # Remove all stacks created by taskcat project 
       - taskcat -q delete taskcat-webserver --no-verify --aws-profile taskcatRole --wait-for-delete
 
   post_build:
     commands:
       - echo Build completed on `date`
       - aws s3 cp --recursive ./taskcat_outputs s3://codebuild-triomni/taskcat-webserver/taskcat_outputs
-      # Now delete all TaskCat CloudFormation Stacks for this entire project
-
 
 cache:
   type: s3
