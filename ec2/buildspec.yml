@@ -1,4 +1,12 @@
 version: 0.2
+env:
+  variables:
+    REGION: eu-west-2
+  
+  secrets-manager:
+    AWS_TASKCAT_ACCESS_KEY: TaskCat:TASKCAT_IAM_ACCESS_KEY
+    AWS_TASKCAT_SECRET_KEY: TaskCat:TASKCAT_IAM_SECRET_KEY
+    AWS_TASKCAT_ROLE_ARN: TaskCat:TASKCAT_IAM_ARN_ROLE
 phases:
   install:
     runtime-versions:
@@ -11,15 +19,36 @@ phases:
       - pip install --upgrade pip
       - pip install taskcat
       - taskcat --version
+      # Setup IAM user taskcat profile which will have permissions to only sts:AssumeRole (for bootstapping)
+      - aws configure set aws_access_key_id $AWS_TASKCAT_ACCESS_KEY --profile taskcat
+      - aws configure set aws_secret_access_key $AWS_TASKCAT_SECRET_KEY --profile taskcat
+      - aws configure set region $REGION --profile taskcat
+      - aws configure set output json --profile taskcat
+      # Set up taskcatRole profile which will be used by taskcat command to permform stacks deletion
+      - aws configure set profile.taskcatRole.role_arn $AWS_TASKCAT_ROLE_ARN
+      - aws configure set profile.taskcatRole.source_profile taskcat
+      - aws configure set profile.taskcatRole.region $REGION
+      - aws configure set profile.taskcatRole.output json
+      - aws configure list-profiles
   build:
     commands:
       - echo Build started on `date`
-      - taskcat test run -p ./ec2
+      # Do not delete CloudFormation Stack after TaskCat has completed its tests because we want to run our own tests on Infrastructure too
+      - taskcat test run -p ./ec2 --no-delete
       - ls -1 taskcat_outputs
+      - taskcat -q list --profiles taskcatRole
+      # Custom test to ensure web server is responding to endpoint
+      - ls
+      # Remove all stacks created by taskcat project
+      - taskcat -q delete taskcat-webserver --no-verify --aws-profile taskcatRole --wait-for-delete
+
   post_build:
     commands:
       - echo Build completed on `date`
       - aws s3 cp --recursive ./taskcat_outputs s3://codebuild-triomni/taskcat-webserver/taskcat_outputs
+      # Now delete all TaskCat CloudFormation Stacks for this entire project
+
+
 cache:
   type: s3
   location: codebuild-triomni/build-cache-python
