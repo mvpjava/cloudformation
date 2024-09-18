@@ -38,8 +38,7 @@ phases:
       - ls -1 taskcat_outputs
       - taskcat -q list --profiles taskcatRole
       # Custom test to ensure web server is responding to endpoint
-      # TODO (replace ls with actual test)
-      - ls
+      - ./ec2/test-scripts/test-webserver-endpoint.sh
       # Remove all stacks created by taskcat project 
       - taskcat -q delete taskcat-webserver --no-verify --aws-profile taskcatRole --wait-for-delete
 
