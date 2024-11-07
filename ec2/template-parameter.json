@@ -11,7 +11,10 @@
     "Statement": [
       {
         "Effect": "Allow",
-        "Action": "Update:Delete",
+        "Action": [
+          "Update:Modify",
+          "Update:Delete"
+        ],
         "Principal": "*",
         "Resource": "*"
       }
