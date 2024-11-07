@@ -36,11 +36,11 @@ phases:
       # Do not delete CloudFormation Stack after TaskCat has completed its tests because we want to run our own tests on Infrastructure too
       - taskcat test run -p ./ec2 --no-delete
       - ls -1 taskcat_outputs
-      - taskcat -q list --profiles taskcatRole
+      - taskcat list --profiles taskcatRole
       # Custom test to ensure web server is responding to endpoint
       - ./ec2/test-scripts/test-webserver-endpoint.sh $REGION
       # Remove all stacks created by taskcat project 
-      - taskcat -q delete taskcat-webserver --no-verify --aws-profile taskcatRole
+      - taskcat -d delete taskcat-webserver --no-verify --aws-profile taskcatRole
 
   post_build:
     commands:
