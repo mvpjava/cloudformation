@@ -40,7 +40,7 @@ phases:
       # Custom test to ensure web server is responding to endpoint
       - ./ec2/test-scripts/test-webserver-endpoint.sh $REGION
       # Remove all stacks created by taskcat project 
-      - taskcat -q delete taskcat-webserver --no-verify --aws-profile taskcatRole --wait-for-delete
+      - taskcat -q delete taskcat-webserver --no-verify --aws-profile taskcatRole
 
   post_build:
     commands:
