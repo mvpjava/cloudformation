@@ -8,12 +8,18 @@ fi
 
 KEY_NAME_ARG1=$1
 STACK_NAME=apache-web-server
+CFN_TEMPLATE_FILENAME=cfn-EC2-SG-cfn-init-signal.json
 
 echo "Creating Stack"
 
+./validate-template.sh "$CFN_TEMPLATE_FILENAME" || { echo "CloudFormation template Validation failed"; exit 1; }
+
+# Adding the --capabilities CAPABILITY_NAMED_IAM option tells CloudFormation that you’re aware the stack will create or modify IAM resources. This is a security precaution to prevent accidental modifications to IAM roles and permissions.
+#
 aws cloudformation create-stack \
   --stack-name $STACK_NAME  \
-  --template-body file://cfn-EC2-SG-cfn-init-signal.json \
+  --template-body file://$CFN_TEMPLATE_FILENAME \
+  --capabilities CAPABILITY_NAMED_IAM \
   --parameters \
     ParameterKey=KeyName,ParameterValue="$KEY_NAME_ARG1" \
     ParameterKey=InstanceType,ParameterValue=t2.micro \
