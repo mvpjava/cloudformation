@@ -314,6 +314,9 @@
                 "KeyName": {
                     "Ref": "KeyName"
                 },
+                "IamInstanceProfile":{
+                  "Ref":"EC2InstanceProfile"
+                },
                 "ImageId": {
                     "Fn::FindInMap": [
                         "AWSRegionArch2AMI",
@@ -381,7 +384,39 @@
                     }
                 ]
             }
-        }
+        },
+        "EC2InstanceRole":{
+            "Type":"AWS::IAM::Role",
+            "Properties":{
+               "AssumeRolePolicyDocument":{
+                  "Version":"2012-10-17",
+                  "Statement":[
+                     {
+                        "Effect":"Allow",
+                        "Principal":{
+                           "Service":"ec2.amazonaws.com"
+                        },
+                        "Action":"sts:AssumeRole"
+                     }
+                  ]
+            },
+            "RoleName": "my-java-all-infra-ec2-role",
+            "ManagedPolicyArns":[
+                  "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+                  "arn:aws:iam::aws:policy/AmazonInspector2ManagedCisPolicy"
+               ]
+            }
+         },
+         "EC2InstanceProfile":{
+            "Type":"AWS::IAM::InstanceProfile",
+            "Properties":{
+               "Roles":[
+                  {
+                     "Ref":"EC2InstanceRole"
+                  }
+               ]
+            }
+         }
     },
     "Outputs": {
         "StackName": {
