@@ -352,7 +352,7 @@
 		"Tags": [
         	  {
 		    "Key": "InspectorTarget",
-		    "Value": "CISScan"
+		    "Value": "CVE"
 		  }
 	        ]
             }
