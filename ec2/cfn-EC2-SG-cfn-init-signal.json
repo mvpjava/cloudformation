@@ -345,7 +345,13 @@
                             ]
                         ]
                     }
-                }
+                },
+		"Tags": [
+        	  {
+		    "Key": "InspectorTarget",
+		    "Value": "CISScan"
+		  }
+	        ]
             }
         },
         "InstanceSecurityGroup": {
