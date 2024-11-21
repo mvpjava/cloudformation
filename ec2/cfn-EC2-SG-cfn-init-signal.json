@@ -400,7 +400,25 @@
                      }
                   ]
             },
-            "RoleName": "my-java-all-infra-ec2-role",
+            "RoleName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "my-java-all-infra-ec2-role",
+                  {
+                    "Fn::Select": [
+                      2,
+                      {
+                        "Fn::Split": [
+                          "/",
+                          { "Ref": "AWS::StackId" }
+                         ]
+                      }
+                    ]
+                  }
+                ]
+              ]
+            },
             "ManagedPolicyArns":[
                   "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
                   "arn:aws:iam::aws:policy/AmazonInspector2ManagedCisPolicy"
