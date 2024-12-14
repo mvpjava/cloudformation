@@ -90,7 +90,7 @@ fi
 # Update the system
 sudo dnf update -y
 
-#install_maven
+install_maven
 
 configure_maven_env
 
