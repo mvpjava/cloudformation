@@ -1,7 +1,6 @@
 #!/bin/bash -e
 
 # Script installs latest version of Terraform on centos/RHEL distros.
-echo "test"
 
 # Verify the script is running on a supported OS (CentOS/RHEL)
 if ! grep -Ei "(centos|rhel)" /etc/os-release > /dev/null 2>&1; then
