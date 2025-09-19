@@ -7,8 +7,6 @@
 
 MVN_FILENAME="apache-maven-3.9.11-bin.tar.gz"
 MVN_URL="https://dlcdn.apache.org/maven/maven-3/3.9.11/binaries/${MVN_FILENAME}"
-cd /tmp
-
 
 # Extract Maven version from the filename
 # -o: Stands for "only matching." Ensures that grep outputs only the part of the line that matches the pattern, rather than the whole line.
