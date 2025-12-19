@@ -2,5 +2,5 @@ template-file-path: ec2/cfn-EC2-SG-cfn-init-signal.json
 
 parameters:
   KeyName: WebTier-EC2-London-KeyPair
-  InstanceType: t2.micro
+  InstanceType: t3.micro
   SSHLocation: 0.0.0.0/0
