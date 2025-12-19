@@ -1,4 +1,4 @@
-template-file-path: ec2/cfn-EC2-SG-cfn-init-signal.yml
+template-file-path: ec2/cfn-EC2-SG-cfn-init-signal.json
 
 parameters:
   KeyName: WebTier-EC2-London-KeyPair
