@@ -1,0 +1,7 @@
+{
+  "Parameters": {
+    "KeyName": "WebTier-EC2-London-KeyPair.pem",
+    "InstanceType": "t2.micro",
+    "SSHLocation": "0.0.0.0/0"
+  }
+}
