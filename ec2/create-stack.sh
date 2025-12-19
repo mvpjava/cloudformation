@@ -15,7 +15,6 @@ echo "Creating Stack"
 ./validate-template.sh "$CFN_TEMPLATE_FILENAME" || { echo "CloudFormation template Validation failed"; exit 1; }
 
 # Adding the --capabilities CAPABILITY_NAMED_IAM option tells CloudFormation that you’re aware the stack will create or modify IAM resources. This is a security precaution to prevent accidental modifications to IAM roles and permissions.
-#
 aws cloudformation create-stack \
   --stack-name $STACK_NAME  \
   --template-body file://$CFN_TEMPLATE_FILENAME \
