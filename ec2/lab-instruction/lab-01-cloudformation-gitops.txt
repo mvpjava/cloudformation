@@ -1,0 +1,64 @@
+Lab: Lab04-codepipeline-python-webapp
+=============================
+
+Setup:
+====================================================================================================
+  - Cretae a new public Github repo and copy files from google drive into it
+  https://drive.google.com/drive/folders/1ObEeTv1q8AV9Z1bPy-ein-TesBO7e6xs?usp=drive_link
+
+
+ - You have to specify you 3 input paramters in file ec2-gitops-deploy.json which will be 
+   past to the cloudformation template to create the stack.
+ 
+====================================================================================================
+
+   
+Cloudformation
+============
+
+- Goto AWS Cloudformation service on AWS Management console
+- Create a Stack with Option "Sync from Git"
+- Name you stack
+- Under section "Stack deployment file"
+  - select option "I am providing my own file in my repository" (this is referring to: ec2-gitops-deploy.yml)
+- Under section "Template definition repository"
+  - Choose a linked Git repository
+    - Select you Repository on GitHub and branch
+	- For the "Deployment file path" enter "ec2-gitops-deploy.yml"
+  - Under "IAM role"
+    - Select "New IAM role" and enter a role name
+- Click Next button
+- Under Configure stack options
+  - You will need to either reference a pre-existing IAM Service Role for cloudformation to allow it to deploy
+    the resources. If you have not done this in the past then, create a new IAM role in a seperate tab and then
+	reference it here by click on the refresh button. 
+- Leave all other options with default values and click on "Next" button
+- Review and create stack
+* NOte: You may get an error mesage stating that it cannot create your gitops IAM role. You can dis-regard
+this message (seems to be a bug)
+
+- Confirm you gitops sync is working and the cloudformation changeset has been created under the stacks "Git sync" Tab
+- Confirm that your EC2 instance type is being provisioned with its Security Group (SG)
+- Once the CFN stack is complete goto http://$EC2_PUBLIC_IP_ADDRESS  and view if website is up
+
+- You have determined that you need to modify your CFN template and change the EC2 instance type to a t2.micro and
+  also that you need to modify the SG to add a inbound rule for HTTPS. Perform these modification on the CLI and
+  NOT the GitHub browser interface or else you will kick off 2 events instead of 1)
+   - modify ec2-gitops-deploy.yml (InstanceType: t2.micro)
+   - modify ec2-cfn.json (add the new inbound rule to resource name: InstanceSecurityGroup)
+   - If you do not remember your cli git commands ...
+     - git add .
+	 - git commit -m "made some modifications on ..." .
+	 - git push
+
+- This should kick off a new changeset in cloudformation within 1 minute.
+- What does cloudformation do in response to your git commits?
+  - Send me screen shots and explanation.
+  
+- What does this "Sync with Git" feature replace, you having to do with CodePipeline?
+  
+  
+Cleanup
+=======
+Delete the stack from the cli with the aws cloudformation command (figure it out)
+- aws cloudformation help
