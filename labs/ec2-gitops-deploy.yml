@@ -1,0 +1,6 @@
+template-file-path: ec2-cfn.json
+
+parameters:
+  KeyName: !!! TODO_ENTER_KEY_NA>ME_WITHOUT_PEM_EXT!!!
+  InstanceType: !!!TODO_ENTER_INSTANCE_TYPE!!!
+  SSHLocation: !!!TODO_ENTER_IP!!!
