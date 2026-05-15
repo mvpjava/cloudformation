@@ -1,6 +1,18 @@
 #!/bin/bash
-
+#exit the script immediately if any command fails
 set -e
+
+# Trace execution (echo each line before it runs)
+set -x
+
+# Determine the target user. 
+# If $USER is empty or root, we default to 'ec2-user'.
+TARGET_USER="$USER"
+
+if [ -z "$TARGET_USER" ] || [ "$TARGET_USER" = "root" ]; then
+    echo "Current user is empty or root. Defaulting to ec2-user since script is for Amazon Linux 2023."
+    TARGET_USER="ec2-user"
+fi
 
 echo "Updating packages..."
 sudo dnf update -y
@@ -15,8 +27,8 @@ echo "Starting and enabling Docker..."
 sudo systemctl enable docker
 sudo systemctl start docker
 
-echo "Adding your user ($USER) to the docker group..."
-sudo usermod -aG docker "$USER"
+echo "Adding your user ($TARGET_USER) to the docker group..."
+sudo usermod -aG docker "$TARGET_USER"
 
 echo "Setting up Docker CLI auto-completion..."
 # This enables docker auto-complete in your shell
