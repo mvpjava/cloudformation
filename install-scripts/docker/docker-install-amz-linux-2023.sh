@@ -44,3 +44,4 @@ source "$DOCKER_COMPLETION_FILE" || true
 
 echo "All done! You may need to log out and log back in for group changes to take effect."
 echo "Test docker is installed with: docker version"
+echo "!!! Ensure you are the $TARGET_USER when executing docker commands (i.e: sudo su ec2-user) !!!"
