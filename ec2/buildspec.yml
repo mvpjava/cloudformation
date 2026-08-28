@@ -15,7 +15,8 @@ phases:
       - echo install phase started on `date`
       - python --version
       - pip --version
-      - pip install --upgrade pip setuptools
+      - pip install --upgrade pip
+      - pip install "setuptools<81"
       - pip install taskcat
       - taskcat --version
       # Setup IAM user taskcat profile which will have permissions to only sts:AssumeRole (for bootstapping)
