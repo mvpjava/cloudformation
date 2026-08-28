@@ -10,14 +10,12 @@
         "InstanceType": {
             "Description": "WebServer EC2 instance type",
             "Type": "String",
-            "Default": "t2.small",
+            "Default": "t3.micro",
             "AllowedValues": [
-                "t1.micro",
-                "t2.nano",
                 "t2.micro",
                 "t2.small",
                 "t2.medium",
-                "t2.large"
+                "t3.micro"
             ],
             "ConstraintDescription": "must be a valid EC2 instance type."
         },
@@ -33,72 +31,28 @@
     },
     "Mappings": {
         "AWSInstanceType2Arch": {
-            "t1.micro": {
-                "Arch": "HVM64"
-            },
-            "t2.large": {
-                "Arch": "HVM64"
-            },
-            "t2.medium": {
-                "Arch": "HVM64"
-            },
             "t2.micro": {
                 "Arch": "HVM64"
             },
-            "t2.nano": {
-                "Arch": "HVM64"
-            },
-            "t2.small": {
+            "t3.micro": {
                 "Arch": "HVM64"
             }
         },
         "AWSRegionArch2AMI": {
-            "eu-central-1": {
-                "HVM64": "ami-0f454ec961da9a046",
-                "HVMG2": "NOT_SUPPORTED"
-            },
-            "eu-north-1": {
-                "HVM64": "ami-0e78cd18c67fcf512",
-                "HVMG2": "NOT_SUPPORTED"
-            },
-            "eu-south-1": {
-                "HVM64": "ami-07d048788725b9602",
-                "HVMG2": "NOT_SUPPORTED"
-            },
             "eu-west-1": {
                 "HVM64": "ami-0db5ca3e5748fb7e2",
                 "HVMG2": "NOT_SUPPORTED"
             },
             "eu-west-2": {
-                "HVM64": "ami-07baf6b15b7387f24",
+                "HVM64": "ami-06f9e3b45a89cf4aa",
                 "HVMG2": "NOT_SUPPORTED"
             },
             "eu-west-3": {
                 "HVM64": "ami-05a13fbd8aa57eedc",
                 "HVMG2": "NOT_SUPPORTED"
             },
-            "eu-south-2": {
-                "HVM64": "ami-051306f4e885d6de4",
-                "HVMG2": "NOT_SUPPORTED"
-            },
-            "eu-central-2": {
-                "HVM64": "ami-0fcd532574732cb0f",
-                "HVMG2": "NOT_SUPPORTED"
-            },
             "us-east-1": {
                 "HVM64": "ami-01989ebfd388ea377",
-                "HVMG2": "NOT_SUPPORTED"
-            },
-            "us-east-2": {
-                "HVM64": "ami-0de69dde1945155da",
-                "HVMG2": "NOT_SUPPORTED"
-            },
-            "us-west-1": {
-                "HVM64": "ami-08fe20a82dcaa1c92",
-                "HVMG2": "NOT_SUPPORTED"
-            },
-            "us-west-2": {
-                "HVM64": "ami-05848d23360f5edfe",
                 "HVMG2": "NOT_SUPPORTED"
             }
         }
