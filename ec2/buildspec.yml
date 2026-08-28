@@ -10,13 +10,12 @@ env:
 phases:
   install:
     runtime-versions:
-      python: latest
+      python: 3.12
     commands:
       - echo install phase started on `date`
       - python --version
-      - curl -O https://bootstrap.pypa.io/get-pip.py
-      - python3 get-pip.py
-      - pip install --upgrade pip
+      - pip --version
+      - pip install --upgrade pip setuptools
       - pip install taskcat
       - taskcat --version
       # Setup IAM user taskcat profile which will have permissions to only sts:AssumeRole (for bootstapping)
