@@ -1,20 +1,45 @@
 project:
   name: taskcat-webserver
+
+  # Default regions: If taskcat tests dont specify regions then. test run in all regions specified in this list
   regions:
     - eu-west-2
+    - us-east-1
 
 tests:
 
-  webserver-t2-micro-london:
+  webserver-t2-eu-west-2:
     template: ./cfn-EC2-SG-cfn-init-signal.json
+    regions:
+      - eu-west-2
     s3_bucket: codebuild-triomni
     parameters:
       KeyName: WebTier-EC2-London-KeyPair
       InstanceType: t2.micro
 
-  webserver-t3-micro-london:
+  webserver-t3-eu-west-2:
     template: ./cfn-EC2-SG-cfn-init-signal.json
+    regions:
+      - eu-west-2
     s3_bucket: codebuild-triomni
     parameters:
       KeyName: WebTier-EC2-London-KeyPair
       InstanceType: t3.micro
+
+  webserver-t2-us-east-1:
+    template: ./cfn-EC2-SG-cfn-init-signal.json
+    regions:
+      - us-east-1
+    s3_bucket: codebuild-triomni
+    parameters:
+      KeyName: EC2-Developer-VM-Keys-2
+      InstanceType: t2.small
+
+  webserver-t3-us-east-1:
+    template: ./cfn-EC2-SG-cfn-init-signal.json
+    regions:
+      - us-east-1
+    s3_bucket: codebuild-triomni
+    parameters:
+      KeyName: EC2-Developer-VM-Keys-2
+      InstanceType: t2.medium
