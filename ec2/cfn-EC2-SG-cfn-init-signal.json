@@ -1,267 +1,287 @@
 {
-    "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "AWS CloudFormation Sample Template EC2InstanceWithSecurityGroupSample: Create an Amazon EC2 instance running the Amazon Linux AMI. Creates an EC2 security group for the instance to give you SSH access. CF will reports EC2 instance as 'CREATE_COMPLETE' only when cfn-signal is called (once everything in ::Init has completed.",
-    "Parameters": {
-        "KeyName": {
-            "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
-            "Type": "AWS::EC2::KeyPair::KeyName",
-            "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
-        },
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation Sample Template EC2InstanceWithSecurityGroupSample: Create an Amazon EC2 instance running Amazon Linux 2023. Creates an EC2 security group for SSH and HTTP access. CloudFormation reports the EC2 instance as CREATE_COMPLETE only when cfn-signal is called after cfn-init has completed.",
+
+  "Parameters": {
+    "KeyName": {
+      "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
+    },
+
+    "InstanceType": {
+      "Description": "WebServer EC2 instance type",
+      "Type": "String",
+      "Default": "t3.micro",
+      "AllowedValues": [
+        "t2.micro",
+        "t2.small",
+        "t2.medium",
+        "t3.micro"
+      ],
+      "ConstraintDescription": "must be a valid EC2 instance type."
+    },
+
+    "SSHLocation": {
+      "Description": "The IP address range that can be used to SSH to the EC2 instances",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "LatestAmiId": {
+      "Description": "Latest Amazon Linux 2023 AMI ID",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+    }
+  },
+
+  "Resources": {
+
+    "EC2Instance": {
+      "Type": "AWS::EC2::Instance",
+
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Timeout": "PT5M"
+        }
+      },
+
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "setup": [
+              "install_server"
+            ]
+          },
+
+          "install_server": {
+            "packages": {
+              "yum": {
+                "httpd": []
+              }
+            },
+
+            "files": {
+              "/var/www/html/index.html": {
+                "content": "Welcome to AWS - with cfn-init & cfn-signal",
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              }
+            },
+
+            "services": {
+              "sysvinit": {
+                "httpd": {
+                  "enabled": true,
+                  "ensureRunning": true
+                }
+              }
+            }
+          }
+        }
+      },
+
+      "Properties": {
         "InstanceType": {
-            "Description": "WebServer EC2 instance type",
-            "Type": "String",
-            "Default": "t3.micro",
-            "AllowedValues": [
-                "t2.micro",
-                "t2.small",
-                "t2.medium",
-                "t3.micro"
-            ],
-            "ConstraintDescription": "must be a valid EC2 instance type."
+          "Ref": "InstanceType"
         },
-        "SSHLocation": {
-            "Description": "The IP address range that can be used to SSH to the EC2 instances",
-            "Type": "String",
-            "MinLength": "9",
-            "MaxLength": "18",
-            "Default": "0.0.0.0/0",
-            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
-            "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
-        }
+
+        "ImageId": {
+          "Ref": "LatestAmiId"
+        },
+
+        "SecurityGroups": [
+          {
+            "Ref": "InstanceSecurityGroup"
+          }
+        ],
+
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+
+        "IamInstanceProfile": {
+          "Ref": "EC2InstanceProfile"
+        },
+
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "\n",
+              [
+                "#!/bin/bash -xe",
+                "yum update -y aws-cfn-bootstrap",
+                "# Read/execute the CloudFormation Init section",
+                {
+                  "Fn::Sub": "/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets setup --region ${AWS::Region}"
+                },
+                "# Signal CloudFormation that initialization has completed",
+                {
+                  "Fn::Sub": "/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}"
+                }
+              ]
+            ]
+          }
+        },
+
+        "Tags": [
+          {
+            "Key": "InspectorTarget",
+            "Value": "CVE"
+          }
+        ]
+      }
     },
-    "Mappings": {
-        "AWSInstanceType2Arch": {
-            "t2.micro": {
-                "Arch": "HVM64"
-            },
-            "t3.micro": {
-                "Arch": "HVM64"
+
+    "InstanceSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+
+      "Properties": {
+        "GroupDescription": "Enable SSH and HTTP access",
+
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "SSHLocation"
             }
-        },
-        "AWSRegionArch2AMI": {
-            "eu-west-1": {
-                "HVM64": "ami-0db5ca3e5748fb7e2",
-                "HVMG2": "NOT_SUPPORTED"
-            },
-            "eu-west-2": {
-                "HVM64": "ami-06f9e3b45a89cf4aa",
-                "HVMG2": "NOT_SUPPORTED"
-            },
-            "eu-west-3": {
-                "HVM64": "ami-05a13fbd8aa57eedc",
-                "HVMG2": "NOT_SUPPORTED"
-            },
-            "us-east-1": {
-                "HVM64": "ami-01989ebfd388ea377",
-                "HVMG2": "NOT_SUPPORTED"
-            }
-        }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ]
+      }
     },
-    "Resources": {
-        "EC2Instance": {
-            "Type": "AWS::EC2::Instance",
-			"CreationPolicy": {
-				"ResourceSignal": {
-				  "Timeout": "PT5M"
-				}
-			},
-			"Metadata": {
-			"AWS::CloudFormation::Init": {
-			  "configSets": {
-				"setup": ["install_server"]
-			  },
-			  "install_server": {
-				"packages": {
-				  "yum": {
-					"httpd": []
-				  }
-				},
-				"files": {
-				  "/var/www/html/index.html": {
-					"content": "Welcome to AWS - with cfn-init & cfn-signal",
-					"mode": "000644",
-					"owner": "root",
-					"group": "root"
-				  }
-				},
-				"services": {
-				  "sysvinit": {
-					"httpd": {
-					  "enabled": true,
-					  "ensureRunning": true
-					}
-				  }
-				}
-			  }
-			}
-			},
-            "Properties": {
-                "InstanceType": {
-                    "Ref": "InstanceType"
-                },
-                "SecurityGroups": [
-                    {
-                        "Ref": "InstanceSecurityGroup"
-                    }
-                ],
-                "KeyName": {
-                    "Ref": "KeyName"
-                },
-                "IamInstanceProfile":{
-                  "Ref":"EC2InstanceProfile"
-                },
-                "ImageId": {
-                    "Fn::FindInMap": [
-                        "AWSRegionArch2AMI",
-                        {
-                            "Ref": "AWS::Region"
-                        },
-                        {
-                            "Fn::FindInMap": [
-                                "AWSInstanceType2Arch",
-                                {
-                                    "Ref": "InstanceType"
-                                },
-                                "Arch"
-                            ]
-                        }
-                    ]
-                },
-                "UserData": {
-                    "Fn::Base64": {
-                        "Fn::Join": [
-                            "\n",
-                            [
-                                "#!/bin/bash -xe",
-								"yum update -y aws-cfn-bootstrap",
-                                "#Read/Execute the ::Init section",
-								{ "Fn::Sub": "/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets setup --region ${AWS::Region}" },
-                                "#Send signal that we are ready not that ",
-								{ "Fn::Sub": "/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}" }
-                            ]
-                        ]
-                    }
-                },
-		"Tags": [
-        	  {
-		    "Key": "InspectorTarget",
-		    "Value": "CVE"
-		  }
-	        ]
+
+    "EC2InstanceRole": {
+      "Type": "AWS::IAM::Role",
+
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+
+          "Statement": [
+            {
+              "Effect": "Allow",
+
+              "Principal": {
+                "Service": "ec2.amazonaws.com"
+              },
+
+              "Action": "sts:AssumeRole"
             }
+          ]
         },
-        "InstanceSecurityGroup": {
-            "Type": "AWS::EC2::SecurityGroup",
-            "Properties": {
-                "GroupDescription": "Enable SSH access via port 22",
-                "SecurityGroupIngress": [
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "22",
-                        "ToPort": "22",
-                        "CidrIp": {
-                            "Ref": "SSHLocation"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "80",
-                        "ToPort": "80",
-                        "CidrIp": "0.0.0.0/0"
-                    }
-                ]
-            }
-        },
-        "EC2InstanceRole":{
-            "Type":"AWS::IAM::Role",
-            "Properties":{
-               "AssumeRolePolicyDocument":{
-                  "Version":"2012-10-17",
-                  "Statement":[
-                     {
-                        "Effect":"Allow",
-                        "Principal":{
-                           "Service":"ec2.amazonaws.com"
-                        },
-                        "Action":"sts:AssumeRole"
-                     }
-                  ]
-            },
-            "RoleName": {
-              "Fn::Join": [
-                "-",
-                [
-                  "my-java-all-infra-ec2-role",
+
+        "RoleName": {
+          "Fn::Join": [
+            "-",
+            [
+              "my-java-all-infra-ec2-role",
+              {
+                "Fn::Select": [
+                  2,
                   {
-                    "Fn::Select": [
-                      2,
+                    "Fn::Split": [
+                      "/",
                       {
-                        "Fn::Split": [
-                          "/",
-                          { "Ref": "AWS::StackId" }
-                         ]
+                        "Ref": "AWS::StackId"
                       }
                     ]
                   }
                 ]
-              ]
-            },
-            "ManagedPolicyArns":[
-                  "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
-                  "arn:aws:iam::aws:policy/AmazonInspector2ManagedCisPolicy"
-               ]
-            }
-         },
-         "EC2InstanceProfile":{
-            "Type":"AWS::IAM::InstanceProfile",
-            "Properties":{
-               "Roles":[
-                  {
-                     "Ref":"EC2InstanceRole"
-                  }
-               ]
-            }
-         }
+              }
+            ]
+          ]
+        },
+
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+          "arn:aws:iam::aws:policy/AmazonInspector2ManagedCisPolicy"
+        ]
+      }
     },
-    "Outputs": {
-        "StackName": {
-            "Description" : "This Stack name. Useful for passing along through pipleline actions as variable",
-            "Value":{
-                "Ref": "AWS::StackName"
-            }
-        },
-        "InstanceId": {
-            "Description": "InstanceId of the newly created EC2 instance",
-            "Value": {
-                "Ref": "EC2Instance"
-            }
-        },
-        "AZ": {
-            "Description": "Availability Zone of the newly created EC2 instance",
-            "Value": {
-                "Fn::GetAtt": [
-                    "EC2Instance",
-                    "AvailabilityZone"
-                ]
-            }
-        },
-        "PublicDNS": {
-            "Description": "Public DNSName of the newly created EC2 instance",
-            "Value": {
-                "Fn::GetAtt": [
-                    "EC2Instance",
-                    "PublicDnsName"
-                ]
-            }
-        },
-        "PublicIP": {
-            "Description": "Public IP address of the newly created EC2 instance",
-            "Value": {
-                "Fn::GetAtt": [
-                    "EC2Instance",
-                    "PublicIp"
-                ]
-            }
-        }
+
+    "EC2InstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "EC2InstanceRole"
+          }
+        ]
+      }
     }
+  },
+
+  "Outputs": {
+    "StackName": {
+      "Description": "CloudFormation stack name",
+      "Value": {
+        "Ref": "AWS::StackName"
+      }
+    },
+
+    "InstanceId": {
+      "Description": "Instance ID of the newly created EC2 instance",
+      "Value": {
+        "Ref": "EC2Instance"
+      }
+    },
+
+    "AMI": {
+      "Description": "AMI ID used by the EC2 instance",
+      "Value": {
+        "Ref": "LatestAmiId"
+      }
+    },
+
+    "AZ": {
+      "Description": "Availability Zone of the newly created EC2 instance",
+      "Value": {
+        "Fn::GetAtt": [
+          "EC2Instance",
+          "AvailabilityZone"
+        ]
+      }
+    },
+
+    "PublicDNS": {
+      "Description": "Public DNS name of the newly created EC2 instance",
+      "Value": {
+        "Fn::GetAtt": [
+          "EC2Instance",
+          "PublicDnsName"
+        ]
+      }
+    },
+
+    "PublicIP": {
+      "Description": "Public IP address of the newly created EC2 instance",
+      "Value": {
+        "Fn::GetAtt": [
+          "EC2Instance",
+          "PublicIp"
+        ]
+      }
+    },
+
+    "WebsiteURL": {
+      "Description": "URL of the web server",
+      "Value": {
+        "Fn::Sub": "http://${EC2Instance.PublicIp}"
+      }
+    }
+  }
 }
