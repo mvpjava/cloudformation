@@ -2,6 +2,7 @@ version: 0.2
 env:
   variables:
     REGION: eu-west-2
+    REGION_DR: us-east-1
   
   secrets-manager:
     AWS_TASKCAT_ACCESS_KEY: TaskCat:TASKCAT_IAM_ACCESS_KEY
@@ -37,10 +38,16 @@ phases:
       - taskcat test run -p ./ec2 --no-delete
       - ls -1 taskcat_outputs
       - taskcat list --profiles taskcatRole --regions eu-west-2
+
       # Custom test to ensure web server is responding to endpoint
       - ./ec2/test-scripts/test-webserver-endpoint.sh $REGION
+      - ./ec2/test-scripts/test-webserver-endpoint.sh $REGION_DR
+
+      
       # Remove all stacks created by taskcat project 
-      - taskcat -q delete taskcat-webserver --no-verify --aws-profile taskcatRole --region eu-west-2 --wait-for-delete
+      - taskcat -q delete taskcat-webserver --no-verify --aws-profile taskcatRole --region "$REGION" --wait-for-delete
+      - taskcat -q delete taskcat-webserver --no-verify --aws-profile taskcatRole --region "$REGION_DR"  --wait-for-delete
+
 
   post_build:
     commands:
