@@ -1,6 +1,5 @@
 #!/bin/sh -xe
 
-# Check if the required number of parameters is provided
 if [ "$#" -ne 1 ]; then
   echo "Usage: $0 <AWS_REGION>"
   exit 1
@@ -8,37 +7,73 @@ fi
 
 REGION=$1
 
-echo "Testing webserver endpoint"
+echo "========================================"
+echo "TaskCat Webserver Tests"
+echo "Region: $REGION"
+echo "========================================"
 
-#Retrieve Stackname from taskcat which all start with 'tCaT'. This is a simple test and should be made more robust
-#as more than 1 CloudFormation template could start with this but for this demo, it will do.
-STACK_NAME=$(aws cloudformation --region $REGION describe-stacks --query "Stacks[?starts_with(StackName, 'tCaT')].StackName" --output text)
-
-if [ -z "$STACK_NAME" ]; then
-  echo "Error: No taskcat CloudFormation found in $REGION"
-  exit 1
-fi
-
-# Retrieve output parameter 'PublicIP' for testing
-PUBLIC_IP=$(aws cloudformation --region $REGION describe-stacks \
-  --stack-name $STACK_NAME \
-  --query "Stacks[0].Outputs[?OutputKey=='PublicIP'].OutputValue" \
+STACK_NAMES=$(aws cloudformation --region "$REGION" describe-stacks \
+  --query "Stacks[?starts_with(StackName, 'tCaT') && StackStatus != 'DELETE_COMPLETE'].StackName" \
   --output text)
 
-if [ -z "$PUBLIC_IP" ]; then
-  echo "Error: No PUBLIC IP found in web server resource. Unable to perform test in $REGION"
-  exit 1
-fi
-
-http_status=$(curl -s -o /dev/null -w "%{http_code}" $PUBLIC_IP)
-
-# Check if the status code is 200 (OK)
-if [ $http_status -eq 200 ]; then
-    echo "webserver endpoint test is a SUCCESS. HTTP status code: $http_status"
-    exit 0
-else
-    echo "webserver endpoint FAILED with HTTP status code: $http_status"
+if [ -z "$STACK_NAMES" ]; then
+    echo "ERROR: No TaskCat CloudFormation stacks found in $REGION"
     exit 1
 fi
 
-exit 1
+FAILED=0
+TESTED=0
+
+for STACK_NAME in $STACK_NAMES; do
+
+    echo ""
+    echo "========================================"
+    echo "Testing stack: $STACK_NAME"
+    echo "========================================"
+
+    TESTED=$((TESTED + 1))
+
+    # Retrieve PublicIP CloudFormation output
+    PUBLIC_IP=$(aws cloudformation --region "$REGION" describe-stacks \
+      --stack-name "$STACK_NAME" \
+      --query "Stacks[0].Outputs[?OutputKey=='PublicIP'].OutputValue" \
+      --output text)
+
+    if [ -z "$PUBLIC_IP" ] || [ "$PUBLIC_IP" = "None" ]; then
+        echo "ERROR: No PublicIP output for $STACK_NAME"
+        FAILED=$((FAILED + 1))
+        continue
+    fi
+
+    echo "Public IP: $PUBLIC_IP"
+
+    # Test HTTP endpoint
+    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+      --connect-timeout 10 \
+      --max-time 30 \
+      "http://$PUBLIC_IP")
+
+    if [ "$HTTP_STATUS" -eq 200 ]; then
+        echo "SUCCESS: $STACK_NAME returned HTTP $HTTP_STATUS"
+    else
+        echo "FAILED: $STACK_NAME returned HTTP $HTTP_STATUS"
+        FAILED=$((FAILED + 1))
+    fi
+
+done
+
+echo ""
+echo "========================================"
+echo "TaskCat Test Summary"
+echo "========================================"
+echo "Stacks tested: $TESTED"
+echo "Failures:      $FAILED"
+echo "========================================"
+
+if [ "$FAILED" -eq 0 ]; then
+    echo "ALL WEBSERVER TESTS PASSED"
+    exit 0
+else
+    echo "WEBSERVER TESTS FAILED"
+    exit 1
+fi
